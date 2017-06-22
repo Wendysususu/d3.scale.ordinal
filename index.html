@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>坐标系中的柱形图</title>
+    <style>
+        .axis path,.axis line{
+            fill:none;
+            stroke:black;
+            shape-rendering:crispEdges;
+        }
+        .tooltip{
+            width:100px;
+            height:50px;
+            border:1px solid #000000;
+            border-radius: 3px;
+            position:absolute;
+            background:#000;
+            color:#fff;
+            line-height:1.6em ;
+            display:none;
+            font-size:14px;
+
+        }
+        .axis line {
+            fill:#aaa;
+            stroke:#aaa;
+        }
+    </style>
+</head>
+<body>
+    <script src="d3.min.js"></script>
+    <script>
+        //1定义比例尺
+        var dataset=[160,160,160,160,160,160,160,160,160,160,160,160];
+        //每个区域圆心纵坐标
+        var circle=[[10,40,80,120],[30,90,120,10],[7,100,80,20],[4,60,70,95],[6,127,80,50],[6,70,8,5],[6,113,34,60]
+                ,[33,123,23,45],[43,12,98,55],[34,56,76,87],[4,67,91,127],[23,49,71,20]
+        ];
+        var xAxisWidth=1000;//x轴宽度
+        var yAxisWidth=500;//y轴宽度
+        //提示框
+        var tooltip=d3.select("body").append("div").attr("class","tooltip");
+        //x定义序数比例尺
+        var xScale=d3.scale.ordinal()
+                .domain(d3.range(dataset.length))
+                .rangeRoundBands([0,xAxisWidth],0.4);
+        var xScaleS=d3.scale.ordinal()
+                .domain(['1月份','2月份','3月份','4月份','5月份','6月份','7月份','8月份','9月份','10月份','11月份','12月份'])
+                .rangeRoundBands([0,xAxisWidth],0.4);
+        //y轴线性比例尺
+        var yScale=d3.scale.linear()
+                .domain([0,d3.max(dataset)])
+                .range([0,yAxisWidth]);
+        var svg=d3.select("body").append("svg")
+                .attr("width",1300)
+                .attr("height",1200);
+            var con=svg.append("g").attr("transform","translate(50,10)");
+        var color=d3.scale.category20();
+        con.selectAll("rect").data(dataset).enter()
+                .append("rect")
+                .attr("id",function(d,i){return i;})
+                .attr("x",function(d,i){return xScale(i);})
+                .attr("y",function(d,i){return yAxisWidth-yScale(d);})
+                .attr("width",xScale.rangeBand())
+                .attr("height",function(d){return yScale(d);})
+                .attr("fill","none")
+                .attr("stroke","#eee");
+        //添加坐标轴
+        var xAxis=d3.svg.axis()
+                .scale(xScaleS)
+                .orient("bottom")
+                .tickSize(-500,0);
+        con.append("g")
+                .attr("class","axis")
+                .attr("transform","translate(0,500)")
+                .call(xAxis);
+        //添加y轴
+        yScale.range([yAxisWidth,0]);
+        var yAxis=d3.svg.axis()
+                .scale(yScale)
+                .orient("left")
+                ;
+
+        con.append("g")
+                .attr("class","axis")
+                .call(yAxis);
+       //在各自矩形范围内绘制圆点
+        var rects=d3.selectAll("rect").each(function(d,i){
+            var k=i;
+            console.log(d3.select(this));
+            var conX=d3.select(this).attr("x");
+            var conWidth=d3.select(this).attr("width");
+            console.log(conX);
+            console.log(conWidth);
+            var trx=Number(conX)+50;
+
+            d3.select("svg").selectAll(".circle").data(circle[k]).enter()
+                    .append("circle")
+                    .attr("transform","translate("+trx+",0)")
+                    .attr("cx",function(d){
+                        var ssx=Math.random()*(conWidth)+conX;
+                        return  ssx;
+                    })
+                    .attr("cy",function(d){return yScale(d);})
+                    .attr("r","10")
+                    .attr("fill",function(d,i){return color(k);})
+                    .on("mouseover",function(d){
+                        //d3.selectAll(".tooltip").remove();
+
+                        tooltip.style("left",(d3.event.pageX)+"px")
+                                .style("top",(d3.event.pageY)+"px")
+                                .style("display","inline-block")
+                                .style("opacity","0.5")
+                                .html("当前月份所对应的值为:"+d);
+                    })
+                    .on("mouseout",function(d){
+                        tooltip.style("opacity",0);
+                    });
+        });
+
+    </script>
+</body>
+</html>
